@@ -31,4 +31,6 @@ app.use("/api/v1/category", categoryRoute)
 app.use("/api/v1/product", productRoute)
 app.use("/api/v1/size", sizeRoute)
 
-mongoose.connect(mongodb_url).then(() => console.log("Mongo Db Successfully connected!")).catch(() => console.log("error connecting to mongo!"))
+mongoose.connect(mongodb_url).then(() => console.log("Mongo Db Successfully connected!")).catch((error) => {
+    console.log("error connecting to mongo!", error)
+})
