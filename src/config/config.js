@@ -5,5 +5,8 @@ const config = {
     MONGO_URL: process.env.MONGODB_URL,
     SECRET_KEY: process.env.SECRET_KEY,
     SALT: process.env.SALT,
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE: process.env.SUPABASE_SERVICE_ROLE,
+    SUPABASE_BUCKET: process.env.SUPABASE_BUCKET
 }
 module.exports = config

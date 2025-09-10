@@ -1,6 +1,7 @@
 const UserModel = require("../models/user.model")
 const { encryption, comparison } = require("../helper/encryptDecrypt")
 const { createToken } = require("../helper/common.helper")
+const { uploadImage } = require("../config/supabase")
 
 const deleteUser = async (req, res) => {
     try {
@@ -14,7 +15,12 @@ const deleteUser = async (req, res) => {
     }
 }
 const updateUser = async (req, res) => {
+
     try {
+        console.log("file ", req.file)
+
+        const publicUrl = await uploadImage(req.file)
+
         const id = req.params.id
         const updatedUser = await UserModel.findByIdAndUpdate(id, req.body, { new: true })
         if (!updatedUser) res.status(400).json({ message: "Failed to update User!" })
