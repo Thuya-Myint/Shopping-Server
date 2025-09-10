@@ -29,7 +29,11 @@ const userModelSchema = new mongoose.Schema({
     },
     allowedPaths: {
         type: [String],
-        require: true,
+        required: true,
+    },
+    imageUrl: {
+        type: String,
+        required: false
     }
 
 }, {
