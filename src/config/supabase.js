@@ -13,14 +13,17 @@ const uploadImage = async (file) => {
         const fileName = `${Date.now()}-${file.originalname}`
         const fileStorage = supabaseClient.storage.from(config.SUPABASE_BUCKET)
 
+
         const { data, error } = await fileStorage.upload(fileName, file.buffer, {
             contentType: file.mimetype,
             upsert: true
         })
+
         if (error) {
             console.log("failed to upload image to supabase ", error)
             throw error
         }
+
         const { data: publicUrl } = fileStorage.getPublicUrl(fileName)
 
         console.log("publicUrl ", publicUrl.publicUrl)

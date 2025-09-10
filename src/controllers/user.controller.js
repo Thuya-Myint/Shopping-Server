@@ -19,15 +19,24 @@ const updateUser = async (req, res) => {
     try {
         console.log("file ", req.file)
 
-        const publicUrl = await uploadImage(req.file)
+        let publicUrl
+        if (req.file) {
+            publicUrl = await uploadImage(req.file)
+        }
 
         const id = req.params.id
 
         const updatedUser = await UserModel.findByIdAndUpdate(id,
-            {
+            publicUrl ? {
                 ...req.body,
+                password: encryption(req.body.password),
                 imageUrl: publicUrl
-            },
+            }
+                : {
+                    ...req.body,
+                    password: encryption(req.body.password),
+
+                },
             { new: true })
 
 
