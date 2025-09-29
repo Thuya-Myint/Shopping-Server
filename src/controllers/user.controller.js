@@ -1,5 +1,5 @@
 const UserModel = require("../models/user.model")
-const { encryption, comparison } = require("../helper/encryptDecrypt")
+const { encryption, comparison, decryption } = require("../helper/encryptDecrypt")
 const { createToken } = require("../helper/common.helper")
 const { uploadImage } = require("../config/supabase")
 
@@ -15,35 +15,35 @@ const deleteUser = async (req, res) => {
     }
 }
 const updateUser = async (req, res) => {
-
     try {
-        console.log("file ", req.file)
+        const { id } = req.params
+        let finalData = { ...req.body }
+        console.log("req body ", req.body)
 
-        let publicUrl
-        if (req.file) {
-            publicUrl = await uploadImage(req.file)
+        //file
+        if (req.file && req.body.image !== "null") {
+            const imageUrl = await uploadImage(req.file)
+            finalData = { ...finalData, imageUrl }
+        } else {
+            delete finalData.image
         }
+        //password
+        if (req.body.password && req.body.password !== "undefined") {
+            console.log("password exists")
+            finalData.password = encryption(req.body.password)
+        } else {
+            delete finalData.password
+        }
+        console.log("final data", finalData)
+        const updatedUser = await UserModel.findByIdAndUpdate(id, finalData, { new: true })
+        if (!updatedUser) res.status(400).json({ message: "Failed to update user!", success: false })
+        res.status(200).json({
+            message: "Successfully updated!",
+            success: true,
+            data: updatedUser
 
-        const id = req.params.id
+        })
 
-        const updatedUser = await UserModel.findByIdAndUpdate(id,
-            publicUrl ? {
-                ...req.body,
-                password: encryption(req.body.password),
-                imageUrl: publicUrl
-            }
-                : {
-                    ...req.body,
-                    password: encryption(req.body.password),
-
-                },
-            { new: true })
-
-
-
-        if (!updatedUser) res.status(400).json({ message: "Failed to update User!" })
-        res.status(200).json({ message: "Successfully Updated!" })
-        console.log("updated user ", updatedUser)
     } catch (error) {
         console.log(error)
         res.status(500).json("Internal server error!")
@@ -89,6 +89,7 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     try {
 
+
         const { name, email } = req.body
         const passwordFromReq = req.body.password//plain password
 
@@ -97,8 +98,12 @@ const loginUser = async (req, res) => {
             return res.status(404).json({ message: "user not exists!" })
         }
 
+        console.log("found user ", foundUser)
+
         if (!comparison(passwordFromReq, foundUser.password)) {
-            console.log("not authenticated!")
+            const decrypted = decryption(foundUser.password)
+            console.log(foundUser.password)
+            console.log("not authenticated!", passwordFromReq, decrypted)
             return res.status(403).json({ message: "User not authorized!" })
         }
         // if (foundUser.isLoggedIn)

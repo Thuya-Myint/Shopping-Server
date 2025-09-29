@@ -34,14 +34,14 @@ const decryption = (encryptedText) => {
     const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
     let decrypted = decipher.update(encryptedHex, "hex", "utf8");
     decrypted += decipher.final("utf8");
-    // console.log("decrypted password ", decrypted)
+    console.log("decrypted password ", decrypted)
     return decrypted;
 };
 
 // Secure comparison
 const comparison = (plainPassword, encryptedPassword) => {
     try {
-        // console.log("Plain ", plainPassword, "Encrypt ", decryption(encryptedPassword))
+        console.log("Plain ", plainPassword, "Encrypt ", decryption(encryptedPassword))
         const decrypted = decryption(encryptedPassword);
         // console.log("decrypted ", decrypted)
         return crypto.timingSafeEqual(Buffer.from(plainPassword), Buffer.from(decrypted));

@@ -11,7 +11,7 @@ const categoryRoute = require("./src/routes/category.routes")
 const productRoute = require("./src/routes/product.routes")
 const sizeRoute = require("./src/routes/size.routes")
 const cors = require("cors")
-
+const { connectRedis, setCache, getCache } = require("./src/config/redisClient")
 
 app.use(express.json())
 app.use(cors(
@@ -31,6 +31,13 @@ app.use("/api/v1/category", categoryRoute)
 app.use("/api/v1/product", productRoute)
 app.use("/api/v1/size", sizeRoute)
 
-mongoose.connect(mongodb_url).then(() => console.log("Mongo Db Successfully connected!")).catch((error) => {
+mongoose.connect(mongodb_url).then(() => {
+
+    console.log("Mongo Db Successfully connected!")
+    connectRedis().then(() => {
+        console.log("redis successfully connected")
+    })
+
+}).catch((error) => {
     console.log("error connecting to mongo!", error)
 })
