@@ -95,6 +95,7 @@ const loginUser = async (req, res) => {
 
         const foundUser = await UserModel.findOne({ name: name })
         if (!foundUser) {
+            console.log("user not exists")
             return res.status(404).json({ message: "user not exists!" })
         }
 
