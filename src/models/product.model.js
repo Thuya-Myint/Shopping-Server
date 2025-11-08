@@ -29,6 +29,10 @@ const productModelSchema = new mongoose.Schema({
         required: true,
         default: "Unisex"
     },
+    imageUrls: {
+        type: [String],
+        required: false
+    },
     discount: {
         type: Number,
         required: true,
