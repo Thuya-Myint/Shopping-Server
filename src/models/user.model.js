@@ -17,10 +17,8 @@ const userModelSchema = new mongoose.Schema({
         required: true,
     },
     role: {
-        type: String,
-        enum: ["superadmin", "admin", "user", "saleman"],
-        required: true,
-        default: "user"
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "roles"
     },
     isLoggedIn: {
         type: Boolean,
@@ -34,6 +32,10 @@ const userModelSchema = new mongoose.Schema({
     imageUrl: {
         type: String,
         required: false
+    },
+    active: {
+        type: Boolean,
+        default: true
     }
 
 }, {

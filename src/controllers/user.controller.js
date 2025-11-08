@@ -3,12 +3,34 @@ const { encryption, comparison, decryption } = require("../helper/encryptDecrypt
 const { createToken } = require("../helper/common.helper")
 const { uploadImage } = require("../config/supabase")
 
+
+const getAllAdmin = async (req, res) => {
+    try {
+        const allAdmin = await UserModel.find().populate("role")
+        return res.status(200).json({ data: allAdmin, message: "Admin User Successfully fetched!", success: true })
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ message: "Internal server error!", error })
+    }
+}
 const deleteUser = async (req, res) => {
     try {
         const id = req.params.id
         const deletedUser = await UserModel.findByIdAndDelete(id)
-        if (!deletedUser) res.status(400).json({ message: "Failed to delete User!" })
-        res.status(200).json({ message: "User successfully deleted!" })
+        if (!deletedUser) res.status(400).json({ message: "Failed to delete User!", success: false })
+        res.status(200).json({ message: "User successfully deleted!", success: true })
+    } catch (error) {
+        console.log(error)
+        res.status(500).json("Internal server error!")
+    }
+}
+
+const updateUserRole = async (req, res) => {
+    try {
+        const { id } = req.params
+        const updatedUser = await UserModel.findByIdAndUpdate(id, { role: req.body.role }, { new: true }).populate("role")
+        if (!updateUser) return res.status(400).json({ message: "Failed to update user role!", success: false })
+        res.status(200).json({ success: true, message: "Successfully updated user!", data: updatedUser })
     } catch (error) {
         console.log(error)
         res.status(500).json("Internal server error!")
@@ -70,11 +92,7 @@ const registerUser = async (req, res) => {
 
         res.status(200).json({
             data: response,
-            token: createToken({
-                name: response.name,
-                password: response.password,
-                role: response.role
-            }),
+            token,
             success: true,
             message: "register success!"
         })
@@ -93,7 +111,7 @@ const loginUser = async (req, res) => {
         const { name, email } = req.body
         const passwordFromReq = req.body.password//plain password
 
-        const foundUser = await UserModel.findOne({ name: name })
+        const foundUser = await UserModel.findOne({ name: name }).populate("role")
         if (!foundUser) {
             console.log("user not exists")
             return res.status(404).json({ message: "user not exists!" })
@@ -131,5 +149,7 @@ module.exports = {
     registerUser,
     loginUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    getAllAdmin,
+    updateUserRole
 }

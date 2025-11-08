@@ -10,8 +10,9 @@ const unitRoute = require("./src/routes/unit.routes")
 const categoryRoute = require("./src/routes/category.routes")
 const productRoute = require("./src/routes/product.routes")
 const sizeRoute = require("./src/routes/size.routes")
+const roleRoute = require("./src/routes/role.routes")
 const cors = require("cors")
-const { connectRedis, setCache, getCache } = require("./src/config/redisClient")
+const { connectRedis } = require("./src/config/redisClient")
 
 app.use(express.json())
 app.use(cors(
@@ -30,6 +31,7 @@ app.use("/api/v1/unit", unitRoute)
 app.use("/api/v1/category", categoryRoute)
 app.use("/api/v1/product", productRoute)
 app.use("/api/v1/size", sizeRoute)
+app.use("/api/v1/role", roleRoute)
 
 mongoose.connect(mongodb_url).then(() => {
 
