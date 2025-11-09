@@ -1,9 +1,17 @@
 const Category = require("../models/category.model")
-
+const { uploadImage } = require("../config/supabase")
 const createCategory = async (req, res) => {
 
     try {
-        const createdCategory = await Category.create(req.body)
+        let finalData = { ...req.body }
+
+        if (req.file && req.body.image !== "null") {
+            const imageUrl = await uploadImage(req.file)
+            finalData = { ...finalData, imageUrl }
+        } else {
+            delete finalData.image
+        }
+        const createdCategory = await Category.create(finalData)
         res.status(200).json({ data: createdCategory, message: `Successfully created `, success: true })
     } catch (error) {
         console.log("Error creating category ", error);
@@ -74,6 +82,6 @@ module.exports = {
     updateCategory,
     deleteCategory,
     deleteCategoryByName,
-    updateCategoryByName
+    updateCategoryByName,
 
 }

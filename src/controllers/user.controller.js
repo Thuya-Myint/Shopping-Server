@@ -6,8 +6,12 @@ const { uploadImage } = require("../config/supabase")
 
 const getAllAdmin = async (req, res) => {
     try {
-        const allAdmin = await UserModel.find().populate("role")
-        return res.status(200).json({ data: allAdmin, message: "Admin User Successfully fetched!", success: true })
+        const allAdmin = await UserModel.find().populate({
+            path: "role",
+            match: { name: { $ne: "user" } }
+        })
+        const filtered = allAdmin.filter(u => u.role !== null);
+        return res.status(200).json({ data: filtered, message: "Admin User Successfully fetched!", success: true })
     } catch (error) {
         console.log(error)
         res.status(500).json({ message: "Internal server error!", error })

@@ -5,112 +5,60 @@ const { uploadImages } = require("../config/supabase")
 
 const createProduct = async (req, res) => {
     try {
-
-        let imageUrls = []
-
+        let imageUrls = [];
         if (req.files && req.files.length > 0) {
-            imageUrls = await uploadImages(req.files)
+            imageUrls = await uploadImages(req.files);
         }
 
-        req.body.images = imageUrls
-
-        const createdProduct = await Product.create({
+        const productData = {
             ...req.body,
-            imageUrls
-        })
-        if (!createdProduct)
-            return res.status(400).json({ message: "Failed to add product!" })
+            imageUrls,
+            // Ensure JSON arrays are parsed as objects
+            size: typeof req.body.size === "string" ? JSON.parse(req.body.size) : req.body.size || [],
+            variants: typeof req.body.variants === "string" ? JSON.parse(req.body.variants) : req.body.variants || [],
+            discount: Number(req.body.discount) || 0
+        };
 
+        const createdProduct = await Product.create(productData);
 
-        const sizes = createdProduct.size
-        let createdSizesArray = []
-
-        for (const size of sizes) {
-            const foundSize = await Size.findOne({ sizeNo: size?.sizeNo?.toString() })
-
-            if (!foundSize) {
-                const createdSize = await Size.create({
-                    sizeNo: size.sizeNo,
-                    category: createdProduct.category
-                })
-
-                if (!createdSize) {
-                    await Product.findByIdAndDelete(createdProduct._id)
-                } else {
-                    createdSizesArray.push(createdSize)
-                }
-            }
-        }
-
-        res.status(200).json({
-            message: "Successfully created Product!",
-            createdProduct,
-            createdSizesArray
-        })
-
+        return res.status(200).json({
+            success: true,
+            message: "Product created successfully",
+            data: createdProduct
+        });
     } catch (error) {
-        console.log("Error creating product", error)
-        res.status(500).json({ message: "Failed to create product" })
+        console.log("Create product error:", error);
+        return res.status(500).json({ success: false, message: "Failed to create product" });
     }
-}
+};
 
 const updateProduct = async (req, res) => {
     try {
-        const { id } = req.params;
+        let imageUrls = req.body.imageUrls || [];
 
-        const product = await Product.findById(id);
-        if (!product) return res.status(404).json({ message: "Product not found!" });
-
-        let imageUrls = product.imageUrls || [];
-
-        // Upload new images if any
         if (req.files && req.files.length > 0) {
-            const uploadedUrls = await uploadImages(req.files);
-            imageUrls = [...uploadedUrls];
+            const uploaded = await uploadImages(req.files);
+            imageUrls = [...imageUrls, ...uploaded];
         }
 
-        // Parse size and variants if they come as string
-        let sizes = req.body.size;
-        let variants = req.body.variants;
+        const updatedData = {
+            ...req.body,
+            imageUrls,
+            size: typeof req.body.size === "string" ? JSON.parse(req.body.size) : req.body.size || [],
+            variants: typeof req.body.variants === "string" ? JSON.parse(req.body.variants) : req.body.variants || [],
+            discount: Number(req.body.discount) || 0
+        };
 
-        if (typeof sizes === "string") sizes = JSON.parse(sizes);
-        if (typeof variants === "string") variants = JSON.parse(variants);
+        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updatedData, { new: true });
 
-        // Update product fields
-        product.name = req.body.name || product.name;
-        product.modelNo = req.body.modelNo || product.modelNo;
-        product.category = req.body.category || product.category;
-        product.gender = req.body.gender || product.gender;
-        product.discount = req.body.discount ?? product.discount;
-        product.size = sizes || product.size;
-        product.variants = variants || product.variants;
-        product.imageUrls = imageUrls;
-
-        // Save updated product
-        const updatedProduct = await product.save();
-
-        // Ensure sizes exist in Size collection
-        const createdSizesArray = [];
-        for (const size of updatedProduct.size) {
-            const foundSize = await Size.findOne({ sizeNo: size.price.toString() }); // using price as unique for your logic
-            if (!foundSize) {
-                const createdSize = await Size.create({
-                    sizeNo: size.price,
-                    category: updatedProduct.category
-                });
-                if (createdSize) createdSizesArray.push(createdSize);
-            }
-        }
-
-        res.status(200).json({
-            message: "Product updated successfully!",
-            updatedProduct,
-            createdSizesArray
+        return res.status(200).json({
+            success: true,
+            message: "Product updated successfully",
+            data: updatedProduct
         });
-
     } catch (error) {
-        console.log("Error updating product", error);
-        res.status(500).json({ message: "Failed to update product" });
+        console.log("Update product error:", error);
+        return res.status(500).json({ success: false, message: "Failed to update product" });
     }
 };
 const batchCreateProduct = async (req, res) => {
@@ -123,16 +71,48 @@ const batchCreateProduct = async (req, res) => {
     }
 }
 const getAllProducts = async (req, res) => {
-
     try {
-        const allProducts = await Product.find({}).populate("size")
-        const totalProduct = allProducts.length
-        res.status(200).json({ message: `${totalProduct} ${totalProduct > 1 ? "products" : "product"} retrieved!`, data: allProducts })
+        let { page = 1, limit = 12, category, discount } = req.query;
+
+        page = parseInt(page);
+        limit = parseInt(limit);
+
+        const filter = {};
+
+        // ✅ Filter by category (existing feature)
+        if (category) {
+            filter.category = category;
+        }
+
+        // ✅ Filter by discount items only (new feature)
+        // If discount=true → return items with discount > 0
+        if (discount === "true") {
+            filter.discount = { $gt: 0 };
+        }
+
+        // ✅ Total count for pagination
+        const totalProducts = await Product.countDocuments(filter);
+
+        // ✅ Paginated fetch
+        const products = await Product.find(filter)
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        return res.status(200).json({
+            success: true,
+            message: `${products.length} product(s) retrieved`,
+            totalProducts,
+            totalPages: Math.ceil(totalProducts / limit),
+            currentPage: page,
+            limit,
+            data: products,
+        });
+
     } catch (error) {
-        console.log("Error retrieving product", error)
-        res.status(500).json({ message: "Failed to retrieve product" })
+        console.log("Error retrieving product", error);
+        return res.status(500).json({ message: "Failed to retrieve product" });
     }
-}
+};
 const getProductByCategory = async (req, res) => {
     try {
         const { category } = req.params

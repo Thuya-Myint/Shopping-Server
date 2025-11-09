@@ -1,5 +1,5 @@
-const mongoose = require("mongoose")
-
+const mongoose = require("mongoose");
+const Role = require("./role.model");
 
 const userModelSchema = new mongoose.Schema({
     name: {
@@ -9,37 +9,56 @@ const userModelSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: false,
-        unique: false,
     },
     password: {
         type: String,
         required: true,
     },
+
     role: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "roles"
+        ref: "roles",
+        required: false   // allow empty, pre-save hook will fill it
     },
+
     isLoggedIn: {
         type: Boolean,
-        required: true,
         default: true
     },
+
     allowedPaths: {
         type: [String],
         required: true,
     },
+
     imageUrl: {
-        type: String,
-        required: false
+        type: String
     },
+
     active: {
         type: Boolean,
         default: true
     }
 
-}, {
-    timestamps: true
-})
+}, { timestamps: true });
 
-module.exports = mongoose.model("users", userModelSchema)
+
+// ✅ PRE-SAVE HOOK — automatically assign default role = "user"
+userModelSchema.pre("save", async function (next) {
+    if (!this.role) {
+        const userRole = await Role.findOne({ name: "user" });
+
+        if (!userRole) {
+            // ❌ Role doesn't exist
+            throw new Error('Default role "user" not found in roles collection.');
+        }
+
+        // ✅ Set default role ID
+        this.role = userRole._id;
+    }
+
+    next();
+});
+
+
+module.exports = mongoose.model("users", userModelSchema);
