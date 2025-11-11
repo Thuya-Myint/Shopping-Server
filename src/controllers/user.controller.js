@@ -78,10 +78,12 @@ const updateUser = async (req, res) => {
 
 const registerUser = async (req, res) => {
     try {
-        console.log("req.body", req.body)
+        // console.log("req.body", req.body)
 
+        const { rememberMe } = req.body
         const foundUser = await UserModel.find({ name: req.body.name })
-        console.log("found user ", foundUser)
+
+        // console.log("found user ", foundUser)
         if (foundUser && foundUser.length > 0) {
             return res.status(400).json({ message: "User already exists!" })
         }
@@ -92,7 +94,7 @@ const registerUser = async (req, res) => {
         })
 
         const { name, password, role } = response
-        const token = createToken({ name, password, role })
+        const token = createToken({ name, password, role }, rememberMe)
 
         res.status(200).json({
             data: response,
@@ -111,22 +113,22 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     try {
 
-
-        const { name, email } = req.body
+        console.log("req login", req.body)
+        const { name, email, rememberMe } = req.body
         const passwordFromReq = req.body.password//plain password
 
         const foundUser = await UserModel.findOne({ name: name }).populate("role")
         if (!foundUser) {
-            console.log("user not exists")
+            // console.log("user not exists")/
             return res.status(404).json({ message: "user not exists!" })
         }
 
-        console.log("found user ", foundUser)
+        // console.log("found user ", foundUser)
 
         if (!comparison(passwordFromReq, foundUser.password)) {
             const decrypted = decryption(foundUser.password)
-            console.log(foundUser.password)
-            console.log("not authenticated!", passwordFromReq, decrypted)
+            // console.log(foundUser.password)
+            // console.log("not authenticated!", passwordFromReq, decrypted)
             return res.status(403).json({ message: "User not authorized!" })
         }
         // if (foundUser.isLoggedIn)
@@ -139,7 +141,7 @@ const loginUser = async (req, res) => {
                 name: foundUser.name,
                 password: foundUser.password,
                 role: foundUser.role
-            }),
+            }, rememberMe),
             success: true,
             message: "login success!"
         })

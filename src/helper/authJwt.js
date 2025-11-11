@@ -10,7 +10,7 @@ const verifyToken = async (req, res, next) => {
 
         if (err) return res.status(403).json({ message: "user not authenticated!", error: err })
 
-        // console.log("decoded ", decoded)
+        console.log("decoded ", decoded)
         req.name = decoded.name
         req.role = decoded.role
 
