@@ -10,8 +10,10 @@ const createProduct = async (req, res) => {
             imageUrls = await uploadImages(req.files);
         }
 
+        console.log("req id ", req.id)
         const productData = {
             ...req.body,
+            shopId: req.id,
             imageUrls,
             // Ensure JSON arrays are parsed as objects
             size: typeof req.body.size === "string" ? JSON.parse(req.body.size) : req.body.size || [],
@@ -70,6 +72,55 @@ const batchCreateProduct = async (req, res) => {
         res.status(500).json({ message: "Failed to create product" })
     }
 }
+
+const getProductsByShopId = async (req, res) => {
+    try {
+        let { page = 1, limit = 12, category, discount } = req.query;
+
+        page = parseInt(page);
+        limit = parseInt(limit);
+
+        const filter = {};
+
+        // user/shop scope
+
+        filter.shopId = req.id;  // or filter.shopId = id; (depending on your schema)
+
+        // filter by category
+        if (category) {
+            filter.category = category;
+        }
+
+        // filter for discount items
+        if (discount === "true") {
+            filter.discount = { $gt: 0 };
+        }
+
+        // get total count
+        const totalProducts = await Product.countDocuments(filter);
+
+        // fetch paginated data
+        const products = await Product.find(filter)
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            success: true,
+            message: `${products.length} product(s) retrieved`,
+            totalProducts,
+            totalPages: Math.ceil(totalProducts / limit),
+            currentPage: page,
+            limit,
+            data: products,
+        });
+
+    } catch (error) {
+        console.error("Error retrieving product:", error);
+        return res.status(500).json({ message: "Failed to retrieve product" });
+    }
+};
+
 const getAllProducts = async (req, res) => {
     try {
         let { page = 1, limit = 12, category, discount } = req.query;
@@ -170,5 +221,6 @@ module.exports = {
     batchCreateProduct,
     getProductWithDiscount,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getProductsByShopId
 }

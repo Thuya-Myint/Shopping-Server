@@ -10,6 +10,9 @@ const categoryModelSchema = new mongoose.Schema({
     imageUrl: {
         type: String,
         required: false,
+    },
+    shopId: {
+        type: mongoose.Schema.ObjectId
     }
 }, {
     timestamps: true

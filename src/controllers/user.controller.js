@@ -93,15 +93,17 @@ const registerUser = async (req, res) => {
             password: encryption(req.body.password)
         })
 
-        const { name, password, role } = response
-        const token = createToken({ name, password, role }, rememberMe)
+        const { name, password, role, _id } = response
+        const token = createToken({ _id, name, password, role }, rememberMe)
 
+        console.log("response", response)
         res.status(200).json({
             data: response,
             token,
             success: true,
             message: "register success!"
         })
+
 
     } catch (error) {
         console.log(error)
@@ -126,9 +128,8 @@ const loginUser = async (req, res) => {
         // console.log("found user ", foundUser)
 
         if (!comparison(passwordFromReq, foundUser.password)) {
-            const decrypted = decryption(foundUser.password)
-            // console.log(foundUser.password)
-            // console.log("not authenticated!", passwordFromReq, decrypted)
+
+
             return res.status(403).json({ message: "User not authorized!" })
         }
         // if (foundUser.isLoggedIn)
@@ -138,6 +139,7 @@ const loginUser = async (req, res) => {
         return res.status(200).json({
             data: foundUser,
             token: createToken({
+                _id: foundUser._id,
                 name: foundUser.name,
                 password: foundUser.password,
                 role: foundUser.role

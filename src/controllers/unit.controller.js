@@ -2,6 +2,33 @@ const UnitModel = require("../models/unit.model")
 const { setCache, getCache, clearCache } = require("../config/redisClient")
 const config = require("../config/config")
 
+const getUnitByShopId = async (req, res) => {
+    try {
+        //redis 
+        const cachedData = await getCache(`${config.REDIS_UNIT_KEY_ID}-${req.id}`)
+        if (cachedData) {
+            const jsonData = JSON.parse(cachedData)
+            return res.status(200).json({
+                success: true,
+                message: "Data fetch from Redis cache",
+                data: jsonData
+            })
+        }
+
+        console.log("shop id", req.id)
+        const allUnits = await UnitModel.find({ shopId: req.id })
+
+        await setCache(`${config.REDIS_UNIT_KEY_ID}-${req.id}`, allUnits)
+        return res.status(200).json({
+            success: true,
+            message: "Data fetch from mongo",
+            data: allUnits
+        })
+    } catch (error) {
+        console.log("error fetching unit ", error)
+        res.status(500).json({ message: "Failed to fetch unit!" })
+    }
+}
 const getAllUnit = async (req, res) => {
     try {
         //redis 
@@ -30,10 +57,10 @@ const getAllUnit = async (req, res) => {
 }
 const createUnit = async (req, res) => {
     try {
-        const createdUnit = await UnitModel.create({ name: req.body.name.toUpperCase() })
+        const createdUnit = await UnitModel.create({ name: req.body.name, shopId: req.id })
         if (!createUnit) res.status(405).json({ message: "Failed to create unit!", success: false })
 
-        await clearCache(config.REDIS_UNIT_KEY)
+        await clearCache(`${config.REDIS_UNIT_KEY_ID}-${req.id}`)
         res.status(200).json({ data: createdUnit, message: "Successfully created unit!", success: true })
     } catch (error) {
         console.log("error creating unit ", error)
@@ -70,5 +97,6 @@ module.exports = {
     createUnit,
     updateUnit,
     getAllUnit,
-    deleteUnit
+    deleteUnit,
+    getUnitByShopId
 }

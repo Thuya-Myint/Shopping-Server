@@ -38,6 +38,10 @@ const userModelSchema = new mongoose.Schema({
     active: {
         type: Boolean,
         default: true
+    },
+    paymentMethods: {
+        type: [Object],
+        required: false
     }
 
 }, { timestamps: true });

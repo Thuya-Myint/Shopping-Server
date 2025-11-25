@@ -1,9 +1,20 @@
 const Category = require("../models/category.model")
 const { uploadImage } = require("../config/supabase")
+
+const getCategoryByShopId = async (req, res) => {
+    try {
+
+        const categories = await Category.find({ shopId: req.id })
+        res.status(200).json({ data: categories, message: `Successfully fetched categories `, success: true })
+    } catch (error) {
+        console.log("Error fetching category by shop id ", error);
+        res.status(500).json({ message: "Failed to fetch category!" })
+    }
+}
 const createCategory = async (req, res) => {
 
     try {
-        let finalData = { ...req.body }
+        let finalData = { ...req.body, shopId: req.id }
 
         if (req.file && req.body.image !== "null") {
             const imageUrl = await uploadImage(req.file)
@@ -11,6 +22,7 @@ const createCategory = async (req, res) => {
         } else {
             delete finalData.image
         }
+        console.log(finalData)
         const createdCategory = await Category.create(finalData)
         res.status(200).json({ data: createdCategory, message: `Successfully created `, success: true })
     } catch (error) {
@@ -83,5 +95,5 @@ module.exports = {
     deleteCategory,
     deleteCategoryByName,
     updateCategoryByName,
-
+    getCategoryByShopId
 }
