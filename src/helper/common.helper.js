@@ -12,6 +12,7 @@ const createToken = (payload, rememberMe = false) => {
         expiresIn: config.JWT_TTL || "1d",
     });
 };
+
 const allowedRole = (...role) => {
     return (req, res, next) => {
         try {

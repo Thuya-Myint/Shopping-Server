@@ -1,7 +1,8 @@
 const Product = require("../models/product.model")
 const Size = require("../models/size.model")
 
-const { uploadImages } = require("../config/supabase")
+const { uploadImages } = require("../config/supabase");
+const { setCache } = require("../config/redisClient");
 
 const createProduct = async (req, res) => {
     try {
@@ -105,6 +106,7 @@ const getProductsByShopId = async (req, res) => {
             .limit(limit)
             .sort({ createdAt: -1 });
 
+        // setCache(`product-${page}-${limit}`)
         return res.status(200).json({
             success: true,
             message: `${products.length} product(s) retrieved`,
@@ -114,6 +116,7 @@ const getProductsByShopId = async (req, res) => {
             limit,
             data: products,
         });
+
 
     } catch (error) {
         console.error("Error retrieving product:", error);

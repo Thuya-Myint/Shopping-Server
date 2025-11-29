@@ -96,7 +96,7 @@ const registerUser = async (req, res) => {
         const { name, password, role, _id } = response
         const token = createToken({ _id, name, password, role }, rememberMe)
 
-        console.log("response", response)
+        // console.log("response", response)
         res.status(200).json({
             data: response,
             token,

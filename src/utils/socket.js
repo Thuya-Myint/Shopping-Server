@@ -14,11 +14,15 @@ const initSocket = (server) => {
         console.log("Client connected:", socket.id);
 
         // --- JOIN ROOMS ---
+
         socket.on("join_shop", ({ shopId }) => {
+
+
             if (!shopId) return;
             const roomName = `shop_${String(shopId)}`;
             console.log(`Socket ${socket.id} joining room: ${roomName}`);
             socket.join(roomName);
+
         });
 
         socket.on("join_user", ({ userId }) => {
